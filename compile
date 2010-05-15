@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# If the extension is not '.cpp', doesn't do a thing
+extension=$(echo "$1"|awk -F . '{print $NF}')
+if [ $extension != "cpp" ]; then
+    echo "The file extension must be '.cpp'!"
+    exit 1
+fi
+
+# Gets the basename of the file
+file_basename=$(basename $1 .cpp)
+
+# Compile
+g++ `pkg-config --cflags --libs opencv` -o ${file_basename}.out ${file_basename}.cpp
