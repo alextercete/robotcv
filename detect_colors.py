@@ -7,12 +7,12 @@ KEY_ESC = 27
 WINDOW_MAIN = 'Camera'
 WINDOW_PROCESSED = 'Processed'
 
-RED_MIN = 10
-RED_MAX = 70
-GREEN_MIN = 70
-GREEN_MAX = 130
-BLUE_MIN = 170
-BLUE_MAX = 230
+RED_MIN = 0
+RED_MAX = 60
+GREEN_MIN = 35
+GREEN_MAX = 95
+BLUE_MIN = 75
+BLUE_MAX = 135
 
 
 if __name__ == '__main__':
@@ -45,6 +45,21 @@ if __name__ == '__main__':
         # And the images together to find the desired color
         cv.And(red, green, processed_img)
         cv.And(processed_img, blue, processed_img)
+
+        # Erode and dilate the image, to decrease noise
+        cv.Erode(processed_img, processed_img)
+        #cv.Dilate(processed_img, processed_img)
+
+        # Get the center of mass
+        moments = cv.Moments(processed_img)
+        M00 = cv.GetSpatialMoment(moments, 0, 0)
+        
+        if M00 != 0:
+            x = int(cv.GetSpatialMoment(moments, 1, 0) / M00)
+            y = int(cv.GetSpatialMoment(moments, 0, 1) / M00)
+
+            # Draws the center of mass to the image
+            cv.Circle(img, (x, y), 5, cv.Scalar(0, 0, 255), thickness=-1)
 
         cv.ShowImage(WINDOW_MAIN, img)
         cv.ShowImage(WINDOW_PROCESSED, processed_img)
