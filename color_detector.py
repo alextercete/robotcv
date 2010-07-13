@@ -8,7 +8,7 @@ class ColorDetector:
 
     def add_color(self, red=0, green=0, blue=0):
         '''Adds a color to be detected, given its RGB value.
-        
+
         Arguments should be between 0 (default) and 255.
         '''
         color = red, green, blue
@@ -43,7 +43,7 @@ class ColorDetector:
             # Get the center of mass
             moments = cv.Moments(processed)
             M00 = cv.GetSpatialMoment(moments, 0, 0)
-            
+
             if M00 != 0:
                 x = int(cv.GetSpatialMoment(moments, 1, 0) / M00)
                 y = int(cv.GetSpatialMoment(moments, 0, 1) / M00)

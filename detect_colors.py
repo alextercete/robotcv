@@ -20,8 +20,10 @@ if __name__ == '__main__':
         image = cv.QueryFrame(capture)
 
         detector = ColorDetector(image)
-        detector.add_color(green=33, blue=86)
-        detector.add_color(red=112, green=4, blue=1)
+        detector.add_color(red=225, green=160, blue=34) # Yellow
+        detector.add_color(red=239, green=47, blue=44)  # Red
+        detector.add_color(red=34, green=112, blue=70)  # Green
+        detector.add_color(red=41, green=87, blue=193)  # Blue
         detector.run()
 
         cv.ShowImage(WINDOW_MAIN, detector.get_image())
