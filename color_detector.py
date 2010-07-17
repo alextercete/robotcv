@@ -17,12 +17,10 @@ class ColorDetector:
     def run(self):
         red, green, blue = self.get_components()
 
-        size = cv.GetSize(self.image)
-
-        thresholded_red = cv.CreateImage(size, cv.IPL_DEPTH_8U, 1)
-        thresholded_green = cv.CreateImage(size, cv.IPL_DEPTH_8U, 1)
-        thresholded_blue = cv.CreateImage(size, cv.IPL_DEPTH_8U, 1)
-        processed = cv.CreateImage(size, cv.IPL_DEPTH_8U, 1)
+        processed = cv.CreateImage(cv.GetSize(self.image), cv.IPL_DEPTH_8U, 1)
+        thresholded_red = cv.CloneImage(processed)
+        thresholded_green = cv.CloneImage(processed)
+        thresholded_blue = cv.CloneImage(processed)
 
         for color in self.colors:
             limits = ColorLimits(color)
@@ -36,20 +34,30 @@ class ColorDetector:
             cv.And(thresholded_red, thresholded_green, processed)
             cv.And(processed, thresholded_blue, processed)
 
-            # Erode and dilate the image, to decrease noise
-            cv.Erode(processed, processed)
+            # Erode and dilate the image, to decrease noise (SLOW)
+            #cv.Erode(processed, processed)
             #cv.Dilate(processed, processed)
 
-            # Get the center of mass
-            moments = cv.Moments(processed)
-            M00 = cv.GetSpatialMoment(moments, 0, 0)
+            contours = cv.FindContours(processed,
+                                       cv.CreateMemStorage(),
+                                       cv.CV_RETR_CCOMP,
+                                       cv.CV_CHAIN_APPROX_SIMPLE)
 
-            if M00 != 0:
-                x = int(cv.GetSpatialMoment(moments, 1, 0) / M00)
-                y = int(cv.GetSpatialMoment(moments, 0, 1) / M00)
+            while contours:
 
-                # Draws the center of mass to the image
-                cv.Circle(self.image, (x, y), 5, cv.RGB(0, 0, 0), thickness=-1)
+                # Get the center of mass
+                moments = cv.Moments(contours)
+                M00 = cv.GetSpatialMoment(moments, 0, 0)
+
+                if M00 != 0:
+                    x = int(cv.GetSpatialMoment(moments, 1, 0) / M00)
+                    y = int(cv.GetSpatialMoment(moments, 0, 1) / M00)
+
+                    # Draws the center of mass to the image
+                    cv.Circle(self.image, (x, y), 5, cv.RGB(0, 0, 0), thickness=-1)
+
+                # Get the next contour set
+                contours = contours.h_next()
 
     def get_components(self):
         size = cv.GetSize(self.image)
