@@ -1,5 +1,5 @@
 import unittest
-from message_formatter import *
+from robotcv.message_formatter import *
 
 class TestMessageFormatter(unittest.TestCase):
 
