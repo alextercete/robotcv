@@ -1,5 +1,6 @@
 import cv
 
+KEY_ESC = 27
 WINDOW_MAIN = 'Camera'
 
 class ComputerVision:
@@ -39,7 +40,8 @@ class ComputerVision:
             if color_blob_center:
                 color_blobs_positions.append(color_blob_center)
 
-            contours.h_next()
+            # Get the next contour set
+            contours = contours.h_next()
 
         return color_blobs_positions
 
@@ -90,11 +92,18 @@ class ComputerVision:
 
     @classmethod
     def draw_robots(cls, coordinates, image):
-        pass
+        for coordinate in coordinates:
+            x, y = map(int, map(round, coordinate))
+            cv.Circle(image, (x, y), 5, cv.RGB(0, 0, 0), thickness=-1)
 
     @classmethod
     def show_window(cls, image):
         cv.ShowImage(WINDOW_MAIN, image)
+
+    @classmethod
+    def esc_key_was_pressed(cls, time_to_wait=10):
+        keyCode = cv.WaitKey(time_to_wait) % 0x100
+        return keyCode == KEY_ESC
 
 
 class Color:

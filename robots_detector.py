@@ -1,3 +1,4 @@
+from __future__ import division
 from computer_vision import ComputerVision as CV
 
 class RobotsDetector:
@@ -28,7 +29,7 @@ class RobotsDetector:
 
         Finds the closest two points that can be paired from each list.
         '''
-        return zip(left_points, right_points)
+        return zip(sorted(left_points), sorted(right_points))
 
     @staticmethod
     def calculate_coordinates(pairs):
@@ -37,5 +38,12 @@ class RobotsDetector:
 
         The coordinates are returned as tuples (x, y, theta).
         '''
+        points = []
 
-        pass
+        for pair in pairs:
+            (xL, yL), (xR, yR) = pair
+            point = xL + (xR - xL) / 2, yL + (yR - yL) / 2
+            # FIXME: Calculate also the rotation angle theta
+            points.append(point)
+
+        return points
