@@ -1,4 +1,6 @@
 from __future__ import division
+
+import math
 from computer_vision import ComputerVision as CV
 
 class RobotsDetector:
@@ -36,14 +38,27 @@ class RobotsDetector:
         '''Calculates the robots position and rotation based on the
            its two points representation.
 
-        The coordinates are returned as tuples (x, y, theta).
+        The coordinates are returned as tuples (x, y, theta). The angle
+        is given in degrees
         '''
         points = []
 
         for pair in pairs:
-            (xL, yL), (xR, yR) = pair
-            point = xL + (xR - xL) / 2, yL + (yR - yL) / 2
-            # FIXME: Calculate also the rotation angle theta
-            points.append(point)
+            (x_left, y_left), (x_right, y_right) = pair
+            delta_x, delta_y = x_right - x_left, y_right - y_left
+
+            x, y = x_left + delta_x / 2, y_left + delta_y / 2
+
+            if delta_y == 0:
+                theta = 0 if delta_x > 0 else 180
+            elif delta_x == 0:
+                theta = 90 if delta_y > 0 else 270
+            else:
+                theta = math.atan(delta_y / delta_x) * 180 / math.pi
+
+                if theta < 0:
+                    theta += 360
+
+            points.append((x, y, theta))
 
         return points

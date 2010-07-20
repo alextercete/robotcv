@@ -1,3 +1,4 @@
+import math
 import cv
 
 KEY_ESC = 27
@@ -93,7 +94,9 @@ class ComputerVision:
     @classmethod
     def draw_robots(cls, coordinates, image):
         for coordinate in coordinates:
-            x, y = map(int, map(round, coordinate))
+            x, y = map(int, map(round, coordinate[:2]))
+            theta = coordinate[2] * math.pi / 180
+
             cv.Circle(image, (x, y), 5, cv.RGB(0, 0, 0), thickness=-1)
 
     @classmethod
@@ -117,18 +120,19 @@ class Color:
 class ColorLimits:
 
     def __init__(self, color, delta=30):
+        self.R_min, self.R_max = self.get_limits(color.R, delta)
+        self.G_min, self.G_max = self.get_limits(color.G, delta)
+        self.B_min, self.B_max = self.get_limits(color.B, delta)
 
-        self.R_min = self.get_minimum_limit(color.R, delta)
-        self.R_max = self.get_maximum_limit(color.R, delta)
-        self.G_min = self.get_minimum_limit(color.G, delta)
-        self.G_max = self.get_maximum_limit(color.G, delta)
-        self.B_min = self.get_minimum_limit(color.B, delta)
-        self.B_max = self.get_maximum_limit(color.B, delta)
-
-    def get_minimum_limit(self, component_value, delta):
+    def get_limits(self, component_value, delta):
         minimum_limit = component_value - delta
-        return minimum_limit if minimum_limit >= 0 else 0
+        maximum_limit = component_value + delta
 
-    def get_maximum_limit(self, component_value, delta):
-        minimum_limit = component_value + delta
-        return minimum_limit if minimum_limit <= 255 else 255
+        if minimum_limit < 0:
+            return 0, 2 * delta
+        elif maximum_limit > 255:
+            return 255 - 2 * delta, 255
+
+        return minimum_limit, maximum_limit
+
+

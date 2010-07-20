@@ -36,14 +36,14 @@ class TestRobotsDetector(unittest.TestCase):
 
     def test_coordinates_calculation_one_point(self):
         pairs = [((0, 0), (1, 1))]
-        expected_result = [(0.5, 0.5)]
+        expected_result = [(0.5, 0.5, 45)]
 
         self.verify_calculation(pairs, expected_result)
 
     def test_coordinates_calculation_two_points(self):
         pairs = [((0, 0), (1, 1)),
                  ((2, 4), (3, 4))]
-        expected_result = [(0.5, 0.5), (2.5, 4)]
+        expected_result = [(0.5, 0.5, 45), (2.5, 4, 0)]
 
         self.verify_calculation(pairs, expected_result)
 
@@ -51,7 +51,7 @@ class TestRobotsDetector(unittest.TestCase):
         pairs = [((4, 2), (3, 2)),
                  ((1, 3), (2, 2)),
                  ((5, 2), (5, 1))]
-        expected_result = [(3.5, 2), (1.5, 2.5), (5, 1.5)]
+        expected_result = [(3.5, 2, 180), (1.5, 2.5, 315), (5, 1.5, 270)]
 
         self.verify_calculation(pairs, expected_result)
 
