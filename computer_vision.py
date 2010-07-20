@@ -102,8 +102,8 @@ class ComputerVision:
 
     @classmethod
     def esc_key_was_pressed(cls, time_to_wait=10):
-        keyCode = cv.WaitKey(time_to_wait) % 0x100
-        return keyCode == KEY_ESC
+        key_code = cv.WaitKey(time_to_wait) % 0x100
+        return key_code == KEY_ESC
 
 
 class Color:

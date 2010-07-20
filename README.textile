@@ -1,0 +1,19 @@
+h1. RobotCV
+
+h2. What is it?
+
+Firstly, RobotCV is my Final Project for _Control and Automation Engineering_ in "CEFET/RJ University":http://www.cefet-rj.br. Secondly -- but not least important -- is a way of sharing with others the several things I've learned through the process.
+
+h2. What does it do?
+
+In simple words, it tracks robots position and rotation using a webcam and uses them as inputs to a control algorithm.
+
+h2. How is it done?
+
+I'm using "OpenCV":http://opencv.willowgarage.com/ with "Python":http://www.python.org/ bindings. The robots are identified by two colors placed on the top of them. Position and rotation are them calculated. The user interface is written using "wxPython":www.wxpython.org/ (still a work in progress).
+
+I always try my best to make the code simple, clean and readable to *humans*. Also, I'm making it more fail proof using "TDD":http://en.wikipedia.org/wiki/Test-driven_development.
+
+h2. What are the dependencies?
+
+_OpenCV 2.1_ and _Python 2.6.x_ so far.
