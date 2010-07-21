@@ -30,21 +30,10 @@ class ComputerVision:
         return red, green, blue
 
     @classmethod
-    def find_color_blobs(cls, color, image_channels):
+    def find_color_blob(cls, color, image_channels):
         processed_image = cls.do_processing(color, image_channels)
-        contours = cls.find_contours(processed_image)
-        color_blobs_positions = []
 
-        while contours:
-            color_blob_center = cls.find_center_of_mass(contours)
-
-            if color_blob_center:
-                color_blobs_positions.append(color_blob_center)
-
-            # Get the next contour set
-            contours = contours.h_next()
-
-        return color_blobs_positions
+        return cls.find_center_of_mass(processed_image)
 
     @classmethod
     def do_processing(cls, color, image_channels):
@@ -72,13 +61,6 @@ class ComputerVision:
         return processed_image
 
     @classmethod
-    def find_contours(cls, image):
-        return cv.FindContours(image,
-                               cv.CreateMemStorage(),
-                               cv.CV_RETR_CCOMP,
-                               cv.CV_CHAIN_APPROX_SIMPLE)
-
-    @classmethod
     def find_center_of_mass(cls, image):
         moments = cv.Moments(image)
         M00 = cv.GetSpatialMoment(moments, 0, 0)
@@ -93,9 +75,8 @@ class ComputerVision:
 
     @classmethod
     def draw_robots(cls, coordinates, image):
-        for coordinate in coordinates:
-            x, y = map(int, map(round, coordinate[:2]))
-            theta = coordinate[2] * math.pi / 180
+        if coordinates:
+            x, y = map(int, map(round, coordinates))
 
             cv.Circle(image, (x, y), 5, cv.RGB(0, 0, 0), thickness=-1)
 
@@ -134,5 +115,3 @@ class ColorLimits:
             return 255 - 2 * delta, 255
 
         return minimum_limit, maximum_limit
-
-
