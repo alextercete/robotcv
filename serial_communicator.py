@@ -15,7 +15,7 @@ class SerialCommunicator:
         self.connection.write(message)
 
         # Waits until the robot starts the response
-        while self.connection.read() != SOT
+        while self.connection.read() != SOT:
             time.sleep(SLEEPING_TIME)
 
         message_length = self.connection.read()
