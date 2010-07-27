@@ -1,5 +1,4 @@
 import wx
-from sys import argv
 
 from computer_vision import ComputerVision as CV, Color
 from robots_detector import RobotsDetector
@@ -9,9 +8,10 @@ from serial_communicator import SerialCommunicator
 class MainWindow(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, None, title='RobotCV', size=(250, 350))
+        wx.Frame.__init__(self, None, title='RobotCV', size=(900, 480))
 
         self.webcam_panel = WebcamPanel(self)
+        self.image_panel = ImagePanel(self)
         self.webcam_timer = WebcamTimer(self)
 
         # Initializes the robot detector
@@ -25,8 +25,15 @@ class MainWindow(wx.Frame):
         # Initializes the serial communicator
         self.communicator = SerialCommunicator()
 
+        self.do_layout()
         self.set_defaults()
         self.bind_events()
+
+    def do_layout(self):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(self.webcam_panel, 1, wx.EXPAND, 0)
+        sizer.Add(self.image_panel, 0, wx.EXPAND, 0)
+        self.SetSizer(sizer)
 
     def set_defaults(self):
         self.update_capture()
@@ -83,10 +90,19 @@ class MainWindow(wx.Frame):
         self.Destroy()
 
 
+class ImagePanel(wx.Panel):
+
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+
+        empty_bitmap = wx.EmptyBitmap(640, 480)
+        self.webcam_image = wx.StaticBitmap(self, bitmap=empty_bitmap)
+
+
 class WebcamPanel(wx.Panel):
 
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent, wx.ID_ANY)
+        wx.Panel.__init__(self, parent)
 
         self.spn_camera_index = wx.SpinCtrl(self, max=10, initial=0)
         self.chk_send_data = wx.CheckBox(self, label='Send data through serial port')
@@ -124,7 +140,7 @@ class WebcamSizer(wx.BoxSizer):
         self.main_sizer.Add(*args, **kwargs)
 
     def add_form_field(self, label_text, form_field):
-        lbl_form_field = wx.StaticText(self.panel, wx.ID_ANY, label_text)
+        lbl_form_field = wx.StaticText(self.panel, label=label_text)
 
         inner_sizer = wx.BoxSizer(wx.HORIZONTAL)
         inner_sizer.Add(lbl_form_field, 1, wx.CENTER, 0)
@@ -164,8 +180,19 @@ class WebcamTimer(wx.Timer):
         image = CV.grab_frame(self.parent.capture)
         coordinates = self.parent.detector.get_robots_coordinates(image)
 
+        self.show_image(image, coordinates)
         self.send_message(coordinates)
         self.log(coordinates)
+
+    def show_image(self, image, robots_coordinates):
+        image_panel = self.parent.image_panel
+
+        CV.draw_robots(robots_coordinates, image)
+        CV.convert_to_RGB(image)
+
+        bitmap = wx.BitmapFromBuffer(image.width, image.height, image.tostring())
+        image_panel.webcam_image.SetBitmap(bitmap)
+        image_panel.Refresh()
 
     def log(self, message):
         if self.show_log_in_console:
@@ -179,5 +206,7 @@ class WebcamTimer(wx.Timer):
 
 def main():
     app = wx.App()
-    frame = MainWindow().Show()
+    frame = MainWindow()
+    frame.Centre()
+    frame.Show(True)
     app.MainLoop()

@@ -19,6 +19,10 @@ class ComputerVision:
         return cv.QueryFrame(capture)
 
     @classmethod
+    def convert_to_RGB(cls, image):
+        cv.CvtColor(image, image, cv.CV_BGR2RGB)
+
+    @classmethod
     def split_into_channels(cls, image):
         red = cv.CreateImage(cv.GetSize(image), cv.IPL_DEPTH_8U, 1)
         green = cv.CloneImage(red)
