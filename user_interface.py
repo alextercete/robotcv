@@ -17,9 +17,9 @@ class MainWindow(wx.Frame):
         # Initializes the robot detector
         #color = Color(red=225, green=160, blue=34)  # Yellow
         #color = Color(red=41, green=87, blue=193)   # Blue
-        color = Color(red=30, green=112, blue=68)   # Green
+        color = Color(red=30, green=112, blue=68)    # Green
         #color = Color(red=228, green=46, blue=39)   # Red
-        #color = Color(red=90, green=249, blue=211)   # Green (lab)
+        #color = Color(red=90, green=249, blue=211)  # Green (lab)
         self.detector = RobotsDetector(color)
 
         # Initializes the serial communicator
@@ -75,8 +75,13 @@ class MainWindow(wx.Frame):
             timer.start()
 
     def close(self, event):
-        self.webcam_timer.stop()
+        timer = self.webcam_timer
+
+        if timer.IsRunning():
+            timer.stop()
+
         self.Destroy()
+
 
 class WebcamPanel(wx.Panel):
 
@@ -169,11 +174,10 @@ class WebcamTimer(wx.Timer):
     def send_message(self, data):
         if self.send_messages:
             message = MF.encode(SEND_ROBOTS_POSITIONS, data)
-            self.parent.communicator.send_message(message)
+            self.parent.communicator.send_command(message)
 
 
-if __name__ == '__main__':
-
+def main():
     app = wx.App()
     frame = MainWindow().Show()
     app.MainLoop()

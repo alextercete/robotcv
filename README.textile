@@ -10,10 +10,10 @@ In simple words, it tracks robots position and rotation using a webcam and uses 
 
 h2. How is it done?
 
-I'm using "OpenCV":http://opencv.willowgarage.com/ with "Python":http://www.python.org/ bindings. The robots are identified by two colors placed on the top of them. Position and rotation are them calculated and sent through serial port (using "pySerial":http://pyserial.sourceforge.net/). The user interface is written using "wxPython":www.wxpython.org/ (still a work in progress).
+I'm using "OpenCV":http://opencv.willowgarage.com/ with "Python":http://www.python.org/ bindings. The robots are identified by two colors placed on the top of them. Position and rotation are them calculated and sent through serial port (using "pySerial":http://pyserial.sourceforge.net/). The user interface is written using "wxPython":www.wxpython.org/.
 
 I always try my best to make the code simple, clean and readable to *humans*. Also, I'm making it more fail proof using "TDD":http://en.wikipedia.org/wiki/Test-driven_development.
 
 h2. What are the dependencies?
 
-_OpenCV 2.1_, _Python 2.6.x_ and _pySerial 2.4_ so far.
+_OpenCV 2.1_, _Python 2.6.x_, _pySerial 2.4_ and _wxPython 2.8.x_ so far.
