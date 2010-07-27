@@ -6,9 +6,10 @@ SLEEPING_TIME = 0.01
 
 class SerialCommunicator:
 
-    def __init__(self, port_name='/dev/usb/ttyUSB0'):
+    def __init__(self, port='/dev/usb/ttyUSB0', baudrate=19200):
         self.connection = Serial()
-        self.connection.port = port_name
+        self.connection.port = port
+        self.connection.baudrate = baudrate
 
     def set_port(self, port_name):
         self.connection.port = port_name

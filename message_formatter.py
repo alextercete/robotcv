@@ -5,7 +5,7 @@ SOT = chr(0x01)
 EOT = chr(0x02)
 
 # Messages
-SEND_ROBOTS_POSITIONS = chr(0x19)
+SEND_ROBOTS_POSITIONS = chr(0xf5)
 
 class BadFormatError(Exception):
 

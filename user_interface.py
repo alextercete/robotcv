@@ -3,6 +3,7 @@ from sys import argv
 
 from computer_vision import ComputerVision as CV, Color
 from robots_detector import RobotsDetector
+from message_formatter import MessageFormatter as MF, SEND_ROBOTS_POSITIONS
 from serial_communicator import SerialCommunicator
 
 class MainWindow(wx.Frame):
@@ -72,8 +73,13 @@ class MainWindow(wx.Frame):
             timer.start()
 
     def close(self, event):
-        self.webcam_timer.stop()
+        timer = self.webcam_timer
+
+        if timer.IsRunning():
+            timer.stop()
+
         self.Destroy()
+
 
 class WebcamPanel(wx.Panel):
 
@@ -165,12 +171,11 @@ class WebcamTimer(wx.Timer):
 
     def send_message(self, message_data):
         if self.send_messages:
-            #self.parent.communicator.send_message(message_data)
-            pass
+            message = MF.encode(SEND_ROBOTS_POSITIONS, data)
+            self.parent.communicator.send_command(message)
 
 
-if __name__ == '__main__':
-
+def main():
     app = wx.App()
     frame = MainWindow().Show()
     app.MainLoop()
