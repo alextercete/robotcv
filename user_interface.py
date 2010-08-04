@@ -8,10 +8,9 @@ from serial_communicator import SerialCommunicator
 class MainWindow(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, None, title='RobotCV', size=(900, 480))
+        wx.Frame.__init__(self, None, title='RobotCV', size=(550, 450))
 
-        self.webcam_panel = WebcamPanel(self)
-        self.image_panel = ImagePanel(self)
+        # Initializes the webcam timer
         self.webcam_timer = WebcamTimer(self)
 
         # Initializes the robot detector
@@ -25,61 +24,30 @@ class MainWindow(wx.Frame):
         # Initializes the serial communicator
         self.communicator = SerialCommunicator()
 
+        self.config_panel = ConfigPanel(self, 'Configuration')
+        self.webcam_timer_panel = WebcamTimerPanel(self, 'Webcam timer')
+        self.commands_panel = CommandsPanel(self, 'Immediate commands')
+        self.run_mode_panel = RunModePanel(self, 'Continuous run mode')
+
         self.do_layout()
-        self.set_defaults()
         self.bind_events()
 
     def do_layout(self):
+        left_sizer = wx.BoxSizer(wx.VERTICAL)
+        left_sizer.Add(self.config_panel, 0, wx.EXPAND, 0)
+        left_sizer.Add(self.webcam_timer_panel, 0, wx.EXPAND, 0)
+
+        right_sizer = wx.BoxSizer(wx.VERTICAL)
+        right_sizer.Add(self.commands_panel, 0, wx.EXPAND, 0)
+        right_sizer.Add(self.run_mode_panel, 0, wx.EXPAND, 0)
+
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(self.webcam_panel, 1, wx.EXPAND, 0)
-        sizer.Add(self.image_panel, 0, wx.EXPAND, 0)
+        sizer.Add(left_sizer, 1, wx.EXPAND, 0)
+        sizer.Add(right_sizer, 1, wx.EXPAND, 0)
         self.SetSizer(sizer)
 
-    def set_defaults(self):
-        self.update_capture()
-        self.enable_sending_data()
-        self.update_port_name()
-        self.update_polling_time()
-        self.enable_log()
-
     def bind_events(self):
-        panel = self.webcam_panel
-        panel.spn_camera_index.Bind(wx.EVT_SPINCTRL, self.update_capture)
-        panel.chk_send_data.Bind(wx.EVT_CHECKBOX, self.enable_sending_data)
-        panel.txt_port_name.Bind(wx.EVT_TEXT, self.update_port_name)
-        panel.spn_polling_time.Bind(wx.EVT_SPINCTRL, self.update_polling_time)
-        panel.chk_enable_log.Bind(wx.EVT_CHECKBOX, self.enable_log)
-        panel.btn_toggle_webcam.Bind(wx.EVT_BUTTON, self.toggle_webcam)
-
         self.Bind(wx.EVT_CLOSE, self.close)
-
-    def update_capture(self, event=None):
-        camera_index = self.webcam_panel.spn_camera_index.GetValue()
-        self.capture = CV.get_capture(camera_index)
-
-    def enable_sending_data(self, event=None):
-        checked_state = self.webcam_panel.chk_send_data.GetValue()
-        self.webcam_timer.send_messages = checked_state
-
-    def update_port_name(self, event=None):
-        port_name = self.webcam_panel.txt_port_name.GetValue()
-        self.communicator.set_port(port_name)
-
-    def update_polling_time(self, event=None):
-        value = self.webcam_panel.spn_polling_time.GetValue()
-        self.webcam_timer.polling_time = value
-
-    def enable_log(self, event=None):
-        checked_state = self.webcam_panel.chk_enable_log.GetValue()
-        self.webcam_timer.show_log_in_console = checked_state
-
-    def toggle_webcam(self, event):
-        timer = self.webcam_timer
-
-        if timer.IsRunning():
-            timer.stop()
-        else:
-            timer.start()
 
     def close(self, event):
         timer = self.webcam_timer
@@ -88,69 +56,6 @@ class MainWindow(wx.Frame):
             timer.stop()
 
         self.Destroy()
-
-
-class ImagePanel(wx.Panel):
-
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-
-        empty_bitmap = wx.EmptyBitmap(640, 480)
-        self.webcam_image = wx.StaticBitmap(self, bitmap=empty_bitmap)
-
-
-class WebcamPanel(wx.Panel):
-
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-
-        self.spn_camera_index = wx.SpinCtrl(self, max=10, initial=0)
-        self.chk_send_data = wx.CheckBox(self, label='Send data through serial port')
-        self.txt_port_name = wx.TextCtrl(self, value='/dev/usb/ttyUSB0')
-        self.spn_polling_time = wx.SpinCtrl(self, min=50, max=1000, initial=200)
-        self.chk_enable_log = wx.CheckBox(self, label='Enable console log')
-        self.btn_toggle_webcam = wx.Button(self, label='Start')
-
-        sizer = WebcamSizer(self)
-        sizer.add_form_field('Camera index', self.spn_camera_index)
-        sizer.add_separator()
-        sizer.add(self.chk_send_data, 0, wx.ALL, 5)
-        sizer.add_form_field('Port name', self.txt_port_name)
-        sizer.add_form_field('Polling time', self.spn_polling_time)
-        sizer.add_separator()
-        sizer.add(self.chk_enable_log, 0, wx.ALL, 5)
-        sizer.add(self.btn_toggle_webcam, 0, wx.ALL|wx.CENTER, 15)
-
-        self.SetSizer(sizer)
-
-
-class WebcamSizer(wx.BoxSizer):
-
-    def __init__(self, panel):
-        wx.BoxSizer.__init__(self, wx.VERTICAL)
-
-        self.panel = panel
-
-        container = wx.StaticBox(panel, label='Robots detection through webcam')
-        self.main_sizer = wx.StaticBoxSizer(container, wx.VERTICAL)
-        self.Add(self.main_sizer, 0, wx.ALL|wx.EXPAND, 10)
-
-    # XXX: Can't override 'Add'! See: http://wiki.wxpython.org/OverridingMethods
-    def add(self, *args, **kwargs):
-        self.main_sizer.Add(*args, **kwargs)
-
-    def add_form_field(self, label_text, form_field):
-        lbl_form_field = wx.StaticText(self.panel, label=label_text)
-
-        inner_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        inner_sizer.Add(lbl_form_field, 1, wx.CENTER, 0)
-        inner_sizer.Add(form_field, 1, wx.CENTER, 0)
-
-        self.main_sizer.Add(inner_sizer, 0, wx.ALL|wx.EXPAND, 5)
-
-    def add_separator(self):
-        separator = wx.StaticLine(self.panel)
-        self.main_sizer.Add(separator, 0, wx.ALL|wx.EXPAND, 3)
 
 
 class WebcamTimer(wx.Timer):
@@ -169,30 +74,19 @@ class WebcamTimer(wx.Timer):
     def start(self):
         self.log('Starting robots detection...')
         self.Start(self.polling_time)
-        self.parent.webcam_panel.btn_toggle_webcam.SetLabel('Stop')
+        self.parent.webcam_timer_panel.btn_toggle_webcam.SetLabel('Stop')
 
     def stop(self):
         self.Stop()
-        self.parent.webcam_panel.btn_toggle_webcam.SetLabel('Start')
+        self.parent.webcam_timer_panel.btn_toggle_webcam.SetLabel('Start')
         self.log('Robots detection stopped!')
 
     def detect_robots(self, event):
         image = CV.grab_frame(self.parent.capture)
         coordinates = self.parent.detector.get_robots_coordinates(image)
 
-        self.show_image(image, coordinates)
         self.send_message(coordinates)
         self.log(coordinates)
-
-    def show_image(self, image, robots_coordinates):
-        image_panel = self.parent.image_panel
-
-        CV.draw_robots(robots_coordinates, image)
-        CV.convert_to_RGB(image)
-
-        bitmap = wx.BitmapFromBuffer(image.width, image.height, image.tostring())
-        image_panel.webcam_image.SetBitmap(bitmap)
-        image_panel.Refresh()
 
     def log(self, message):
         if self.show_log_in_console:
@@ -202,6 +96,191 @@ class WebcamTimer(wx.Timer):
         if self.send_messages:
             message = MF.encode(SEND_ROBOTS_POSITIONS, data)
             self.parent.communicator.send_command(message)
+
+
+class GenericPanel(wx.Panel):
+
+    def __init__(self, parent, label):
+        wx.Panel.__init__(self, parent)
+
+        self.sizer = FramedSizer(self, label)
+        self.SetSizer(self.sizer)
+
+    def add_field(self, form_field):
+        self.sizer.add_field(form_field)
+
+    def add_labeled_field(self, label, form_field):
+        self.sizer.add_labeled_field(label, form_field)
+
+    def add_button(self, button):
+        self.sizer.add_button(button)
+
+    def add_separator(self):
+        self.sizer.add_separator()
+
+
+class FramedSizer(wx.BoxSizer):
+
+    def __init__(self, panel, label):
+        wx.BoxSizer.__init__(self, wx.VERTICAL)
+
+        self.panel = panel
+
+        container = wx.StaticBox(panel, label=label)
+        self.main_sizer = wx.StaticBoxSizer(container, wx.VERTICAL)
+        self.Add(self.main_sizer, 0, wx.ALL|wx.EXPAND, 10)
+
+    def add_field(self, form_field):
+        self.main_sizer.Add(form_field, 0, wx.ALL, 5)
+
+    def add_labeled_field(self, label, form_field):
+        lbl_form_field = wx.StaticText(self.panel, label=label)
+
+        inner_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        inner_sizer.Add(lbl_form_field, 3, wx.CENTER, 0)
+        inner_sizer.Add(form_field, 4, wx.CENTER, 0)
+
+        self.main_sizer.Add(inner_sizer, 0, wx.ALL|wx.EXPAND, 5)
+
+    def add_button(self, button):
+        self.main_sizer.Add(button, 0, wx.ALL|wx.CENTER, 15)
+
+    def add_separator(self):
+        separator = wx.StaticLine(self.panel)
+        self.main_sizer.Add(separator, 0, wx.ALL|wx.EXPAND, 3)
+
+
+class ConfigPanel(GenericPanel):
+
+    def __init__(self, parent, label=''):
+        GenericPanel.__init__(self, parent, label)
+
+        self.parent = parent
+
+        self.create_controls()
+        self.do_layout()
+        self.set_defaults()
+        self.bind_events()
+
+    def create_controls(self):
+        self.spn_camera_index = wx.SpinCtrl(self, max=10, initial=0)
+        self.chk_enable_communication = \
+            wx.CheckBox(self, label='Enable serial communication')
+        self.txt_port_name = wx.TextCtrl(self, value='/dev/usb/ttyUSB0')
+        self.spn_polling_time = wx.SpinCtrl(self, min=50, max=1000, initial=200)
+        self.chk_enable_log = wx.CheckBox(self, label='Enable console log')
+
+    def do_layout(self):
+        self.add_labeled_field('Camera index', self.spn_camera_index)
+        self.add_separator()
+        self.add_field(self.chk_enable_communication)
+        self.add_labeled_field('Port name', self.txt_port_name)
+        self.add_labeled_field('Polling time', self.spn_polling_time)
+        self.add_separator()
+        self.add_field(self.chk_enable_log)
+
+    def set_defaults(self):
+        self.update_capture()
+        self.enable_communication()
+        self.update_port_name()
+        self.update_polling_time()
+        self.enable_log()
+
+    def bind_events(self):
+        self.spn_camera_index.Bind(wx.EVT_SPINCTRL, self.update_capture)
+        self.chk_enable_communication.Bind(wx.EVT_CHECKBOX, self.enable_communication)
+        self.txt_port_name.Bind(wx.EVT_TEXT, self.update_port_name)
+        self.spn_polling_time.Bind(wx.EVT_SPINCTRL, self.update_polling_time)
+        self.chk_enable_log.Bind(wx.EVT_CHECKBOX, self.enable_log)
+
+    def update_capture(self, event=None):
+        camera_index = self.spn_camera_index.GetValue()
+        self.parent.capture = CV.get_capture(camera_index)
+
+    def enable_communication(self, event=None):
+        checked_state = self.chk_enable_communication.GetValue()
+        self.parent.webcam_timer.send_messages = checked_state
+
+    def update_port_name(self, event=None):
+        port_name = self.txt_port_name.GetValue()
+        self.parent.communicator.set_port(port_name)
+
+    def update_polling_time(self, event=None):
+        value = self.spn_polling_time.GetValue()
+        self.parent.webcam_timer.polling_time = value
+
+    def enable_log(self, event=None):
+        checked_state = self.chk_enable_log.GetValue()
+        self.parent.webcam_timer.show_log_in_console = checked_state
+
+
+class WebcamTimerPanel(GenericPanel):
+
+    def __init__(self, parent, label=''):
+        GenericPanel.__init__(self, parent, label)
+
+        self.parent = parent
+
+        self.create_controls()
+        self.do_layout()
+        self.bind_events()
+
+    def create_controls(self):
+        self.btn_toggle_webcam = wx.Button(self, label='Start')
+
+    def do_layout(self):
+        self.add_button(self.btn_toggle_webcam)
+
+    def bind_events(self):
+        self.btn_toggle_webcam.Bind(wx.EVT_BUTTON, self.toggle_webcam)
+
+    def toggle_webcam(self, event):
+        timer = self.parent.webcam_timer
+
+        if timer.IsRunning():
+            timer.stop()
+        else:
+            timer.start()
+
+
+class CommandsPanel(GenericPanel):
+
+    def __init__(self, parent, label=''):
+        GenericPanel.__init__(self, parent, label)
+
+        self.create_controls()
+        self.do_layout()
+
+    def create_controls(self):
+        self.cbo_commands = wx.ComboBox(self, choices=[
+            'Lock engines',
+            'Unlock engines',
+        ])
+        self.btn_run_command = wx.Button(self, label='Run')
+
+    def do_layout(self):
+        self.add_labeled_field('Commands', self.cbo_commands)
+        self.add_button(self.btn_run_command)
+
+
+class RunModePanel(GenericPanel):
+
+    def __init__(self, parent, label=''):
+        GenericPanel.__init__(self, parent, label)
+
+        self.create_controls()
+        self.do_layout()
+
+    def create_controls(self):
+        self.cbo_run_mode = wx.ComboBox(self, choices=[
+            'Send robots positions',
+            'Acquire control data',
+        ])
+        self.btn_toggle_continuous_mode = wx.Button(self, label='Start')
+
+    def do_layout(self):
+        self.add_labeled_field('Mode', self.cbo_run_mode)
+        self.add_button(self.btn_toggle_continuous_mode)
 
 
 def main():
