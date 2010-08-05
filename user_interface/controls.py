@@ -1,10 +1,8 @@
 import wx
 
-from .computer_vision import ComputerVision as CV, Color
-from .robots_detector import RobotsDetector
-from .message_formatter import MessageFormatter as MF, SEND_ROBOTS_POSITIONS
-from .serial_communicator import SerialCommunicator
 from common import GenericPanel
+from .commands_manager import CommandsManager
+from .commands import *
 
 class MainWindow(wx.Frame):
 
@@ -14,16 +12,8 @@ class MainWindow(wx.Frame):
         # Initializes the webcam timer
         self.webcam_timer = WebcamTimer(self)
 
-        # Initializes the robot detector
-        #color = Color(red=225, green=160, blue=34)  # Yellow
-        #color = Color(red=41, green=87, blue=193)   # Blue
-        color = Color(red=30, green=112, blue=68)    # Green
-        #color = Color(red=228, green=46, blue=39)   # Red
-        #color = Color(red=90, green=249, blue=211)  # Green (lab)
-        self.detector = RobotsDetector(color)
-
-        # Initializes the serial communicator
-        self.communicator = SerialCommunicator()
+        # Initializes the commands manager
+        self.commands_manager = CommandsManager()
 
         self.config_panel = ConfigPanel(self, 'Configuration')
         self.webcam_timer_panel = WebcamTimerPanel(self, 'Webcam timer')
@@ -65,38 +55,22 @@ class WebcamTimer(wx.Timer):
         wx.Timer.__init__(self, parent)
 
         self.parent = parent
-
         self.polling_time = 200
-        self.show_log_in_console = False
-        self.send_messages = False
 
-        parent.Bind(wx.EVT_TIMER, self.detect_robots, self)
+        parent.Bind(wx.EVT_TIMER, self.main_loop, self)
 
     def start(self):
-        self.log('Starting robots detection...')
+        self.parent.commands_manager.log('Starting webcam timer...')
         self.Start(self.polling_time)
         self.parent.webcam_timer_panel.btn_toggle_webcam.SetLabel('Stop')
 
     def stop(self):
         self.Stop()
         self.parent.webcam_timer_panel.btn_toggle_webcam.SetLabel('Start')
-        self.log('Robots detection stopped!')
+        self.parent.commands_manager.log('Webcam timer stopped!')
 
-    def detect_robots(self, event):
-        image = CV.grab_frame(self.parent.capture)
-        coordinates = self.parent.detector.get_robots_coordinates(image)
-
-        self.send_message(coordinates)
-        self.log(coordinates)
-
-    def log(self, message):
-        if self.show_log_in_console:
-            print message
-
-    def send_message(self, data):
-        if self.send_messages:
-            message = MF.encode(SEND_ROBOTS_POSITIONS, data)
-            self.parent.communicator.send_command(message)
+    def main_loop(self, event):
+        self.parent.commands_manager.run_iteration()
 
 
 class ConfigPanel(GenericPanel):
@@ -104,7 +78,8 @@ class ConfigPanel(GenericPanel):
     def __init__(self, parent, label=''):
         GenericPanel.__init__(self, parent, label)
 
-        self.parent = parent
+        self.commands_manager = parent.commands_manager
+        self.webcam_timer = parent.webcam_timer
 
         self.create_controls()
         self.do_layout()
@@ -144,23 +119,23 @@ class ConfigPanel(GenericPanel):
 
     def update_capture(self, event=None):
         camera_index = self.spn_camera_index.GetValue()
-        self.parent.capture = CV.get_capture(camera_index)
+        self.commands_manager.set_webcam_capture(camera_index)
 
     def enable_communication(self, event=None):
         checked_state = self.chk_enable_communication.GetValue()
-        self.parent.webcam_timer.send_messages = checked_state
+        self.commands_manager.send_messages = checked_state
 
     def update_port_name(self, event=None):
         port_name = self.txt_port_name.GetValue()
-        self.parent.communicator.set_port(port_name)
+        self.commands_manager.set_serial_port(port_name)
 
     def update_polling_time(self, event=None):
         value = self.spn_polling_time.GetValue()
-        self.parent.webcam_timer.polling_time = value
+        self.webcam_timer.polling_time = value
 
     def enable_log(self, event=None):
         checked_state = self.chk_enable_log.GetValue()
-        self.parent.webcam_timer.show_log_in_console = checked_state
+        self.commands_manager.show_log_in_console = checked_state
 
 
 class WebcamTimerPanel(GenericPanel):
@@ -197,8 +172,11 @@ class CommandsPanel(GenericPanel):
     def __init__(self, parent, label=''):
         GenericPanel.__init__(self, parent, label)
 
+        self.parent = parent
+
         self.create_controls()
         self.do_layout()
+        self.bind_events()
 
     def create_controls(self):
         self.cbo_commands = wx.ComboBox(self, choices=[
@@ -211,22 +189,58 @@ class CommandsPanel(GenericPanel):
         self.add_labeled_field('Commands', self.cbo_commands)
         self.add_button(self.btn_run_command)
 
+    def bind_events(self):
+        self.btn_run_command.Bind(wx.EVT_BUTTON, self.run_command)
+
+    def run_command(self, event):
+        # TODO: Assure the timer is running before adding the command
+        try:
+            command = {
+                0: LOCK_ENGINES,
+                1: UNLOCK_ENGINES,
+            }[self.cbo_commands.GetCurrentSelection()]
+        except KeyError:
+            # TODO: Show dialog with error message
+            pass
+        else:
+            self.parent.commands_manager.add_command(command)
+
 
 class RunModePanel(GenericPanel):
 
     def __init__(self, parent, label=''):
         GenericPanel.__init__(self, parent, label)
 
+        self.parent = parent
+
         self.create_controls()
         self.do_layout()
+        self.bind_events()
 
     def create_controls(self):
-        self.cbo_run_mode = wx.ComboBox(self, choices=[
+        self.cbo_run_modes = wx.ComboBox(self, choices=[
+            'Idle',
             'Send robots positions',
             'Acquire control data',
         ])
-        self.btn_toggle_continuous_mode = wx.Button(self, label='Start')
+        self.btn_change_run_mode = wx.Button(self, label='Start')
 
     def do_layout(self):
-        self.add_labeled_field('Mode', self.cbo_run_mode)
-        self.add_button(self.btn_toggle_continuous_mode)
+        self.add_labeled_field('Mode', self.cbo_run_modes)
+        self.add_button(self.btn_change_run_mode)
+
+    def bind_events(self):
+        self.btn_change_run_mode.Bind(wx.EVT_BUTTON, self.change_run_mode)
+
+    def change_run_mode(self, event):
+        try:
+            run_mode = {
+                0: IDLE,
+                1: SEND_ROBOTS_POSITIONS,
+                2: ACQUIRE_CONTROL_DATA,
+            }[self.cbo_run_modes.GetCurrentSelection()]
+        except KeyError:
+            # TODO: Show dialog with error message
+            pass
+        else:
+            self.parent.commands_manager.set_run_mode(run_mode)
