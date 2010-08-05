@@ -1,8 +1,11 @@
 import wx
 
-from common import GenericPanel
+from common import GenericPanel, WarningDialog
 from .commands_manager import CommandsManager
 from .commands import *
+
+LABEL_START = 'Start'
+LABEL_STOP = 'Stop'
 
 class MainWindow(wx.Frame):
 
@@ -62,11 +65,11 @@ class WebcamTimer(wx.Timer):
     def start(self):
         self.parent.commands_manager.log('Starting webcam timer...')
         self.Start(self.polling_time)
-        self.parent.webcam_timer_panel.btn_toggle_webcam.SetLabel('Stop')
+        self.parent.webcam_timer_panel.btn_toggle_webcam.SetLabel(LABEL_STOP)
 
     def stop(self):
         self.Stop()
-        self.parent.webcam_timer_panel.btn_toggle_webcam.SetLabel('Start')
+        self.parent.webcam_timer_panel.btn_toggle_webcam.SetLabel(LABEL_START)
         self.parent.commands_manager.log('Webcam timer stopped!')
 
     def main_loop(self, event):
@@ -150,7 +153,7 @@ class WebcamTimerPanel(GenericPanel):
         self.bind_events()
 
     def create_controls(self):
-        self.btn_toggle_webcam = wx.Button(self, label='Start')
+        self.btn_toggle_webcam = wx.Button(self, label=LABEL_START)
 
     def do_layout(self):
         self.add_button(self.btn_toggle_webcam)
@@ -193,17 +196,18 @@ class CommandsPanel(GenericPanel):
         self.btn_run_command.Bind(wx.EVT_BUTTON, self.run_command)
 
     def run_command(self, event):
-        # TODO: Assure the timer is running before adding the command
-        try:
-            command = {
-                0: LOCK_ENGINES,
-                1: UNLOCK_ENGINES,
-            }[self.cbo_commands.GetCurrentSelection()]
-        except KeyError:
-            # TODO: Show dialog with error message
-            pass
+        if self.parent.webcam_timer.IsRunning():
+            try:
+                command = {
+                    0: LOCK_ENGINES,
+                    1: UNLOCK_ENGINES,
+                }[self.cbo_commands.GetCurrentSelection()]
+            except KeyError:
+                WarningDialog('You must select a command').ShowModal()
+            else:
+                self.parent.commands_manager.add_command(command)
         else:
-            self.parent.commands_manager.add_command(command)
+            WarningDialog('Webcam timer must be running!').ShowModal()
 
 
 class RunModePanel(GenericPanel):
@@ -219,28 +223,36 @@ class RunModePanel(GenericPanel):
 
     def create_controls(self):
         self.cbo_run_modes = wx.ComboBox(self, choices=[
-            'Idle',
             'Send robots positions',
             'Acquire control data',
         ])
-        self.btn_change_run_mode = wx.Button(self, label='Start')
+        self.btn_toggle_run_mode = wx.Button(self, label=LABEL_START)
 
     def do_layout(self):
         self.add_labeled_field('Mode', self.cbo_run_modes)
-        self.add_button(self.btn_change_run_mode)
+        self.add_button(self.btn_toggle_run_mode)
 
     def bind_events(self):
-        self.btn_change_run_mode.Bind(wx.EVT_BUTTON, self.change_run_mode)
+        self.btn_toggle_run_mode.Bind(wx.EVT_BUTTON, self.toggle_run_mode)
 
-    def change_run_mode(self, event):
-        try:
-            run_mode = {
-                0: IDLE,
-                1: SEND_ROBOTS_POSITIONS,
-                2: ACQUIRE_CONTROL_DATA,
-            }[self.cbo_run_modes.GetCurrentSelection()]
-        except KeyError:
-            # TODO: Show dialog with error message
-            pass
+    def toggle_run_mode(self, event):
+        commands_manager = self.parent.commands_manager
+        combobox = self.cbo_run_modes
+        button = self.btn_toggle_run_mode
+
+        if commands_manager.continuous_run_mode == IDLE:
+            try:
+                run_mode = {
+                    0: SEND_ROBOTS_POSITIONS,
+                    1: ACQUIRE_CONTROL_DATA,
+                }[combobox.GetCurrentSelection()]
+            except KeyError:
+                WarningDialog('You must select a run mode').ShowModal()
+            else:
+                commands_manager.set_run_mode(run_mode)
+                combobox.Enable(False)
+                button.SetLabel(LABEL_STOP)
         else:
-            self.parent.commands_manager.set_run_mode(run_mode)
+            commands_manager.set_run_mode(IDLE)
+            combobox.Enable(True)
+            button.SetLabel(LABEL_START)

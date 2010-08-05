@@ -50,3 +50,10 @@ class FramedSizer(wx.BoxSizer):
     def add_separator(self):
         separator = wx.StaticLine(self.panel)
         self.main_sizer.Add(separator, 0, wx.ALL|wx.EXPAND, 3)
+
+
+class WarningDialog(wx.MessageDialog):
+
+    def __init__(self, message):
+        wx.MessageDialog.__init__(self, None, message, caption='Warning',
+                                  style=wx.OK|wx.ICON_EXCLAMATION)

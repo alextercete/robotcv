@@ -50,26 +50,30 @@ class CommandsManager:
             pass
 
         elif command == LOCK_ENGINES:
-            self.log("I've locked the engines")
+            self.send_message(command)
+            self.log('Engines were locked')
 
         elif command == UNLOCK_ENGINES:
-            self.log("I've unlocked the engines")
+            self.send_message(command)
+            self.log('Engines were unlocked')
 
         elif command == SEND_ROBOTS_POSITIONS:
             image = CV.grab_frame(self.capture)
             coordinates = self.detector.get_robots_coordinates(image)
 
-            self.send_message(command, coordinates)
+            if coordinates:
+                self.send_message(command, coordinates)
+
             self.log('Robots found at: {0}'.format(coordinates))
 
         elif command == ACQUIRE_CONTROL_DATA:
-            self.log("I'm acquiring control data")
+            self.log('Control data is being acquired')
 
     def log(self, message):
         if self.show_log_in_console:
             print message
 
-    def send_message(self, command, data):
+    def send_message(self, command, data=()):
         if self.send_messages:
             message = MF.encode(command, data)
             self.communicator.send_command(message)

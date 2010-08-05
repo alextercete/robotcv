@@ -1,5 +1,7 @@
 import unittest
-from robotcv.message_formatter import *
+
+from robotcv.message_formatter import MessageFormatter, BadFormatError
+from robotcv.commands import *
 
 class TestMessageFormatter(unittest.TestCase):
 
@@ -14,6 +16,14 @@ class TestMessageFormatter(unittest.TestCase):
     def test_robot_position_message_for_three_robots(self):
         message = (689, 342, 110, 55, 13, 519)
         self.verify_formatting(SEND_ROBOTS_POSITIONS, message)
+
+    def test_lock_engines_message(self):
+        message = ()
+        self.verify_formatting(LOCK_ENGINES, message)
+
+    def test_unlock_engines_message(self):
+        message = ()
+        self.verify_formatting(UNLOCK_ENGINES, message)
 
     def test_malformed_robot_position_message(self):
         message = (437,)

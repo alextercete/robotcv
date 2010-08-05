@@ -1,6 +1,8 @@
 import time
 from serial import Serial
-from message_formatter import SOT
+
+from message_formatter import MessageFormatter as MF, SOT, EOT
+from commands import *
 
 SLEEPING_TIME = 0.01
 
@@ -18,16 +20,22 @@ class SerialCommunicator:
         self.connection.open()
         self.connection.write(message)
 
+        response = self.get_response()
+
+        self.connection.close()
+
+        return response
+
+    def get_response(self):
         # Waits until the robot starts the response
         while self.connection.read() != SOT:
             time.sleep(SLEEPING_TIME)
 
         message_length = self.connection.read()
-        remaining_chars = ord(message_length) + 1
-        message = self.connection.read(remaining_chars)
-        message_type = message[0]
-        encoded_data = message[1:-1]
+        remaining_chars_count = ord(message_length) + len(EOT)
+        message = self.connection.read(remaining_chars_count)
+        command = message[0]
 
-        self.connection.close()
-
-        return message_type, encoded_data
+        if command == ACQUIRE_CONTROL_DATA:
+            data = message[1:-1]
+            return MF.decode_data(command, data)

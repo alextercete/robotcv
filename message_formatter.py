@@ -1,11 +1,9 @@
 import struct
+from commands import *
 
 # Start and end of transmission
 SOT = chr(0x01)
 EOT = chr(0x02)
-
-# Messages
-SEND_ROBOTS_POSITIONS = chr(0xf5)
 
 class BadFormatError(Exception):
 
@@ -19,7 +17,7 @@ class BadFormatError(Exception):
 class MessageFormatter:
 
     @classmethod
-    def encode(cls, message_type, data):
+    def encode(cls, message_type, data=()):
         encoded_data = cls.encode_data(message_type, data)
         message_length = chr(len(message_type + encoded_data))
 
@@ -43,6 +41,8 @@ class MessageFormatter:
     def get_encoding_formats(cls, message_type, data):
 
         basic_format = {
+            LOCK_ENGINES: '',
+            UNLOCK_ENGINES: '',
             SEND_ROBOTS_POSITIONS: 'hh',
         }[message_type]
 
@@ -52,6 +52,8 @@ class MessageFormatter:
     def get_decoding_formats(cls, message_type, data):
 
         basic_format, minimum_length = {
+            LOCK_ENGINES: ('', 0),
+            UNLOCK_ENGINES: ('', 0),
             SEND_ROBOTS_POSITIONS: ('hh', 4),
         }[message_type]
 
@@ -59,9 +61,11 @@ class MessageFormatter:
 
     @classmethod
     def get_formats(cls, basic_format, minimum_length, data_length):
+        try:
+            if data_length % minimum_length > 0:
+                raise BadFormatError('Message length ({0}) is not multiple of {1}!'\
+                                         .format(data_length, minimum_length))
 
-        if data_length % minimum_length > 0:
-            raise BadFormatError('Message length ({0}) is not multiple of {1}!'\
-                                     .format(data_length, minimum_length))
-
-        return '=' + basic_format * int(data_length / minimum_length)
+            return '=' + basic_format * int(data_length / minimum_length)
+        except ZeroDivisionError:
+            return ''
