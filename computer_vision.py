@@ -104,7 +104,7 @@ class Color:
 
 class ColorLimits:
 
-    def __init__(self, color, delta=30):
+    def __init__(self, color, delta=20):
         self.R_min, self.R_max = self.get_limits(color.R, delta)
         self.G_min, self.G_max = self.get_limits(color.G, delta)
         self.B_min, self.B_max = self.get_limits(color.B, delta)
@@ -114,8 +114,8 @@ class ColorLimits:
         maximum_limit = component_value + delta
 
         if minimum_limit < 0:
-            return 0, 2 * delta
+            return 0, int(1.5 * delta)
         elif maximum_limit > 255:
-            return 255 - 2 * delta, 255
+            return 255 - int(1.5 * delta), 255
 
         return minimum_limit, maximum_limit

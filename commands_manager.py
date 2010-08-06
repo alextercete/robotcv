@@ -11,9 +11,9 @@ class CommandsManager:
         # Initializes the robot detector
         #color = Color(red=225, green=160, blue=34)  # Yellow
         #color = Color(red=41, green=87, blue=193)   # Blue
-        color = Color(red=30, green=112, blue=68)    # Green
+        #color = Color(red=30, green=112, blue=68)   # Green
         #color = Color(red=228, green=46, blue=39)   # Red
-        #color = Color(red=90, green=249, blue=211)  # Green (lab)
+        color = Color(red=241, green=255, blue=250)  # Green (lab)
         self.detector = RobotsDetector(color)
 
         # Initializes the serial communicator
