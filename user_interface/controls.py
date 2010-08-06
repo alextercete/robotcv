@@ -10,7 +10,7 @@ LABEL_STOP = 'Stop'
 class MainWindow(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, None, title='RobotCV', size=(550, 450))
+        wx.Frame.__init__(self, None, title='RobotCV', size=(1150, 450))
 
         # Initializes the webcam timer
         self.webcam_timer = WebcamTimer(self)
@@ -22,6 +22,7 @@ class MainWindow(wx.Frame):
         self.webcam_timer_panel = WebcamTimerPanel(self, 'Webcam timer')
         self.commands_panel = CommandsPanel(self, 'Immediate commands')
         self.run_mode_panel = RunModePanel(self, 'Continuous run mode')
+        self.image_panel = ImagePanel(self)
 
         self.do_layout()
         self.bind_events()
@@ -38,6 +39,7 @@ class MainWindow(wx.Frame):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(left_sizer, 1, wx.EXPAND, 0)
         sizer.Add(right_sizer, 1, wx.EXPAND, 0)
+        sizer.Add(self.image_panel, 0, wx.EXPAND, 0)
         self.SetSizer(sizer)
 
     def bind_events(self):
@@ -74,6 +76,29 @@ class WebcamTimer(wx.Timer):
 
     def main_loop(self, event):
         self.parent.commands_manager.run_iteration()
+        self.parent.image_panel.update()
+
+
+class ImagePanel(wx.Panel):
+
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+
+        self.parent = parent
+
+        self.bitmap = wx.EmptyBitmap(640, 480)
+        webcam_image = wx.StaticBitmap(self, bitmap=self.bitmap)
+
+    def update(self):
+        commands_manager = self.parent.commands_manager
+
+        try:
+            webcam_buffer = commands_manager.webcam_buffer
+        except AttributeError:
+            pass
+        else:
+            self.bitmap.CopyFromBuffer(webcam_buffer)
+            self.Refresh()
 
 
 class ConfigPanel(GenericPanel):

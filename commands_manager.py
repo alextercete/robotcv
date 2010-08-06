@@ -61,6 +61,10 @@ class CommandsManager:
             image = CV.grab_frame(self.capture)
             coordinates = self.detector.get_robots_coordinates(image)
 
+            CV.draw_robots(coordinates, image)
+            CV.convert_to_RGB(image)
+            self.webcam_buffer = image.tostring()
+
             if coordinates:
                 self.send_message(command, coordinates)
 
