@@ -196,18 +196,18 @@ class CommandsPanel(GenericPanel):
         self.btn_run_command.Bind(wx.EVT_BUTTON, self.run_command)
 
     def run_command(self, event):
-        if self.parent.webcam_timer.IsRunning():
-            try:
-                command = {
-                    0: LOCK_ENGINES,
-                    1: UNLOCK_ENGINES,
-                }[self.cbo_commands.GetCurrentSelection()]
-            except KeyError:
-                WarningDialog('You must select a command').ShowModal()
-            else:
-                self.parent.commands_manager.add_command(command)
+        try:
+            command = {
+                0: LOCK_ENGINES,
+                1: UNLOCK_ENGINES,
+            }[self.cbo_commands.GetCurrentSelection()]
+        except KeyError:
+            WarningDialog('You must select a command')
         else:
-            WarningDialog('Webcam timer must be running!').ShowModal()
+            if self.parent.webcam_timer.IsRunning():
+                self.parent.commands_manager.add_command(command)
+            else:
+                WarningDialog('Webcam timer must be running!')
 
 
 class RunModePanel(GenericPanel):
@@ -247,7 +247,7 @@ class RunModePanel(GenericPanel):
                     1: ACQUIRE_CONTROL_DATA,
                 }[combobox.GetCurrentSelection()]
             except KeyError:
-                WarningDialog('You must select a run mode').ShowModal()
+                WarningDialog('You must select a run mode')
             else:
                 commands_manager.set_run_mode(run_mode)
                 combobox.Enable(False)

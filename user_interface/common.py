@@ -57,3 +57,5 @@ class WarningDialog(wx.MessageDialog):
     def __init__(self, message):
         wx.MessageDialog.__init__(self, None, message, caption='Warning',
                                   style=wx.OK|wx.ICON_EXCLAMATION)
+
+        self.ShowModal()
