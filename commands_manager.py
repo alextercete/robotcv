@@ -63,7 +63,8 @@ class CommandsManager:
 
             CV.draw_robots(coordinates, image)
             CV.convert_to_RGB(image)
-            self.webcam_buffer = image.tostring()
+            resized_image = CV.resize(image, (300, 225))
+            self.webcam_buffer = resized_image.tostring()
 
             if coordinates:
                 self.send_message(command, coordinates)
