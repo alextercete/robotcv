@@ -58,7 +58,7 @@ class WebcamTimer(wx.Timer):
         wx.Timer.__init__(self, parent)
 
         self.parent = parent
-        self.polling_time = 200
+        self.polling_time = 400
 
         parent.Bind(wx.EVT_TIMER, self.main_loop, self)
 
@@ -94,7 +94,7 @@ class ConfigPanel(GenericPanel):
         self.chk_enable_communication = \
             wx.CheckBox(self, label='Enable serial communication')
         self.txt_port_name = wx.TextCtrl(self, value='/dev/usb/ttyUSB0')
-        self.spn_polling_time = wx.SpinCtrl(self, min=50, max=1000, initial=200)
+        self.spn_polling_time = wx.SpinCtrl(self, min=50, max=1000, initial=400)
         self.chk_enable_log = wx.CheckBox(self, label='Enable console log')
 
     def do_layout(self):

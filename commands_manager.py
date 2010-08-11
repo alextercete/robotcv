@@ -13,7 +13,7 @@ class CommandsManager:
         #color = Color(red=41, green=87, blue=193)   # Blue
         #color = Color(red=30, green=112, blue=68)   # Green
         #color = Color(red=228, green=46, blue=39)   # Red
-        color = Color(red=241, green=255, blue=250)  # Green (lab)
+        color = Color(red=21, green=79, blue=55)  # Green (lab)
         self.detector = RobotsDetector(color)
 
         # Initializes the serial communicator
@@ -61,10 +61,13 @@ class CommandsManager:
             image = CV.grab_frame(self.capture)
             coordinates = self.detector.get_robots_coordinates(image)
 
-            if coordinates:
-                self.send_message(command, coordinates)
-
             self.log('Robots found at: {0}'.format(coordinates))
+
+            if coordinates:
+                control = self.send_message(command, coordinates)
+
+                if control:
+                    self.log('Control: {0}'.format(control))
 
         elif command == ACQUIRE_CONTROL_DATA:
             self.log('Control data is being acquired')
@@ -76,4 +79,4 @@ class CommandsManager:
     def send_message(self, command, data=()):
         if self.send_messages:
             message = MF.encode(command, data)
-            self.communicator.send_command(message)
+            return self.communicator.send_command(message)

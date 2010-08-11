@@ -36,6 +36,10 @@ class SerialCommunicator:
         message = self.connection.read(remaining_chars_count)
         command = message[0]
 
-        if command == ACQUIRE_CONTROL_DATA:
+        if command == SEND_ROBOTS_POSITIONS:
+            data = message[1:-1]
+            return MF.decode_data(command, data)
+
+        elif command == ACQUIRE_CONTROL_DATA:
             data = message[1:-1]
             return MF.decode_data(command, data)
