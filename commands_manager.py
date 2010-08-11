@@ -69,6 +69,11 @@ class CommandsManager:
                 if control:
                     self.log('Control: {0}'.format(control))
 
+            CV.draw_robots(coordinates, image)
+            CV.convert_to_RGB(image)
+            resized_image = CV.resize(image, (300, 225))
+            self.webcam_buffer = resized_image.tostring()
+
         elif command == ACQUIRE_CONTROL_DATA:
             self.log('Control data is being acquired')
 

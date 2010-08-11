@@ -23,6 +23,13 @@ class ComputerVision:
         cv.CvtColor(image, image, cv.CV_BGR2RGB)
 
     @classmethod
+    def resize(cls, image, size=(320, 240)):
+        resized_image = cv.CreateImage(size, image.depth, image.nChannels)
+        cv.Resize(image, resized_image)
+
+        return resized_image
+
+    @classmethod
     def split_into_channels(cls, image):
         red = cv.CreateImage(cv.GetSize(image), cv.IPL_DEPTH_8U, 1)
         green = cv.CloneImage(red)
