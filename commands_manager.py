@@ -1,7 +1,7 @@
 from computer_vision import ComputerVision as CV, Color
 from robots_detector import RobotsDetector
 from message_formatter import MessageFormatter as MF
-from serial_communicator import SerialCommunicator
+from serial_communicator import SerialCommunicator, CommunicationError
 from commands import *
 
 class CommandsManager:
@@ -79,4 +79,8 @@ class CommandsManager:
     def send_message(self, command, data=()):
         if self.send_messages:
             message = MF.encode(command, data)
-            return self.communicator.send_command(message)
+
+            try:
+                return self.communicator.send_command(message)
+            except CommunicationError as error:
+                self.log(error.message)
